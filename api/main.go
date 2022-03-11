@@ -10,28 +10,40 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 
+	"fileslut/common"
 	"fileslut/database"
 	"fileslut/models"
-	"fileslut/user"
+	"fileslut/routers"
+	"fileslut/services"
 
-	"gorm.io/gorm"
+	"fileslut/services/auth"
+	"fileslut/services/user"
 )
 
-func Migrate(db *gorm.DB) {
+func service[T any](service T, key string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set(key, service)
+		c.Next()
+	}
 }
 func main() {
 
 	db := database.NewGormPostgresDB()
+	userService := user.NewGormUserService(db)
+	jwtService := auth.NewJWTAuthService()
 
 	r := gin.Default()
+	r.Use(service(jwtService, services.JWT_SERVICE_KEY))
 
 	v1 := r.Group("/api")
-	user.UsersRegister(v1.Group("/users"))
-	v1.Use(user.AuthMiddleware(false))
+	users := v1.Group("/users")
+	users.Use(service(userService, services.USER_SERVICE_KEY))
 
-	v1.Use(user.AuthMiddleware(true))
-	user.UserRegister(v1.Group("/user"))
-	user.ProfileRegister(v1.Group("/profiles"))
+	routers.UsersRegister(users)
+	v1.Use(common.AuthMiddleware(false))
+
+	v1.Use(common.AuthMiddleware(true))
+	routers.UserRegister(v1.Group("/user"))
 
 	testAuth := r.Group("/api/ping")
 
@@ -41,7 +53,6 @@ func main() {
 		})
 	})
 
-	userService := models.NewGormUserRepository(db)
 	userA := models.User{
 		Username:     "userB",
 		PasswordHash: "HAAASH",

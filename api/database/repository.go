@@ -1,9 +1,5 @@
 package database
 
-import (
-	"time"
-)
-
 type Predicate[T any] func(item T) bool
 
 type Repository[T any] interface {
@@ -19,11 +15,4 @@ type Repository[T any] interface {
 	Update(T) (T, error)
 	// Delete an existing item
 	Delete(id uint) error
-}
-
-type EntityBase struct {
-	Id        int
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt time.Time
 }

@@ -1,12 +1,14 @@
-package user
+package common
 
 import (
-	"fileslut/common"
+	"fileslut/services"
+
+	"net/http"
+	"strings"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
 	"github.com/gin-gonic/gin"
-	"net/http"
-	"strings"
 )
 
 // Strips 'TOKEN ' prefix from token string
@@ -45,7 +47,7 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		UpdateContextUserModel(c, 0)
 		token, err := request.ParseFromRequest(c.Request, MyAuth2Extractor, func(token *jwt.Token) (interface{}, error) {
-			b := ([]byte(common.NBSecretPassword))
+			b := ([]byte(NBSecretPassword))
 			return b, nil
 		})
 		if err != nil {
@@ -59,5 +61,27 @@ func AuthMiddleware(auto401 bool) gin.HandlerFunc {
 			//fmt.Println(my_user_id,claims["id"])
 			UpdateContextUserModel(c, my_user_id)
 		}
+	}
+}
+
+func AuthorizeJWT() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		const BEARER_SCHEMA = "Bearer"
+		authHeader := c.GetHeader("Authorization")
+		tokenString := authHeader[len(BEARER_SCHEMA):]
+
+		jwtService := services.Get[services.JWTService](c, services.JWT_SERVICE_KEY)
+		token, err := jwtService.ValidateToken(tokenString)
+		if err != nil {
+			c.AbortWithError(http.StatusUnauthorized, err)
+			return
+		}
+		if token.Valid {
+			claims := token.Claims.(jwt.MapClaims)
+			c.Set("claims", claims)
+		} else {
+			c.AbortWithStatus(http.StatusUnauthorized)
+		}
+
 	}
 }
