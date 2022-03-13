@@ -8,18 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const (
-	USER_SERVICE_KEY = "user_service"
-	JWT_SERVICE_KEY  = "jwt_service"
-)
-
-func Get[T any](c *gin.Context, key string) T {
-	return c.MustGet(key).(T)
-}
-
 type UserService interface {
 	database.Repository[models.User]
 	Login(username string, password string) bool
+	Register(email string, username string, password string) (uint, error)
 }
 
 type Request[T any] interface {

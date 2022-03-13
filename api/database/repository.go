@@ -6,7 +6,7 @@ type Repository[T any] interface {
 	// Get the a single item by ID
 	Get(id uint) (T, error)
 	// Get all items where predicate is true
-	Where(predicate Predicate[T]) ([]T, error)
+	Where(T) ([]T, error)
 	// Get all items
 	All() ([]T, error)
 	// Create a new item
@@ -15,4 +15,6 @@ type Repository[T any] interface {
 	Update(T) (T, error)
 	// Delete an existing item
 	Delete(id uint) error
+	// Get the first item where predicate is true
+	First(T) (T, error)
 }

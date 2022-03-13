@@ -1,7 +1,6 @@
-package auth
+package services
 
 import (
-	"fileslut/services"
 	"fmt"
 	"os"
 	"time"
@@ -21,7 +20,7 @@ type jwtServices struct {
 }
 
 //auth-jwt
-func NewJWTAuthService() services.JWTService {
+func NewJWTAuthService() JWTService {
 	return &jwtServices{
 		secretKey: getSecretKey(),
 		issure:    "Fileslut",
