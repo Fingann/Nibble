@@ -23,7 +23,7 @@ type jwtServices struct {
 func NewJWTAuthService() JWTService {
 	return &jwtServices{
 		secretKey: getSecretKey(),
-		issure:    "Fileslut",
+		issure:    "nibble",
 	}
 }
 
