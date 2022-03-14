@@ -43,7 +43,7 @@ type UserRetrieveResponse struct {
 
 type UserUpdateRequest struct {
 	Id       uint   `json:"id" form:"Id" binding:"required"`
-	Username string `json:"username""`
+	Username string `json:"username"`
 	Email    string `json:"email" binding:"email"`
 }
 
