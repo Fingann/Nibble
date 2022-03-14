@@ -1,9 +1,9 @@
 package services
 
 import (
-	"fileslut/database"
+	"github.com/Fingann/Nibble/database"
 
-	"fileslut/models"
+	"github.com/Fingann/Nibble/models"
 	"sync"
 
 	"golang.org/x/crypto/bcrypt"

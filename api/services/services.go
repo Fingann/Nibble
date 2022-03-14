@@ -2,12 +2,11 @@ package services
 
 import (
 	"context"
-	"fileslut/database"
-	"fileslut/models"
+
+	"github.com/Fingann/Nibble/database"
+	"github.com/Fingann/Nibble/models"
 
 	"github.com/dgrijalva/jwt-go"
-
-	"github.com/gin-gonic/gin"
 )
 
 type UserService interface {

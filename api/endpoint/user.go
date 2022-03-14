@@ -2,9 +2,9 @@ package endpoint
 
 import (
 	"context"
-	"fileslut/models"
-	"fileslut/services"
-	trans "fileslut/transport"
+	"github.com/Fingann/Nibble/models"
+	"github.com/Fingann/Nibble/services"
+	trans "github.com/Fingann/Nibble/transport"
 
 	"gorm.io/gorm"
 )

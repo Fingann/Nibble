@@ -1,7 +1,7 @@
 package database
 
 import (
-	"fileslut/models"
+	"github.com/Fingann/Nibble/models"
 	"sync"
 
 	"gorm.io/gorm"

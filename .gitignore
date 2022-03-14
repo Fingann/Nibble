@@ -1,5 +1,7 @@
 
 ./minio/*
+minio/*
+./api/__debug_bin
 
 # Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,go,linux
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,go,linux

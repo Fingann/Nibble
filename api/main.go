@@ -7,10 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 
-	"fileslut/database"
-	"fileslut/services"
+	"github.com/Fingann/Nibble/database"
+	"github.com/Fingann/Nibble/services"
 
-	"fileslut/endpoint"
+	"github.com/Fingann/Nibble/endpoint"
 )
 
 func GinUriHandler[T any, K any](endpoint endpoint.Endpoint[T, K], b binding.Binding) gin.HandlerFunc {

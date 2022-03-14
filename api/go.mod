@@ -1,4 +1,4 @@
-module fileslut
+module github.com/Fingann/Nibble
 
 go 1.18
 
