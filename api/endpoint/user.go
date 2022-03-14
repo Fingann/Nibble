@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func MakeUserRegistrationEndpoint(userService services.UserService) Endpoint[trans.RegistrationRequest, trans.RegistrationResponse] {
+func MakeRegistrationEndpoint(userService services.UserService) Endpoint[trans.RegistrationRequest, trans.RegistrationResponse] {
 	return func(ctx context.Context, request trans.RegistrationRequest) (trans.RegistrationResponse, error) {
 
 		id, err := userService.Register(request.Email, request.Username, request.Password)
@@ -21,7 +21,7 @@ func MakeUserRegistrationEndpoint(userService services.UserService) Endpoint[tra
 	}
 }
 
-func MakeUserLoginEndpoint(userService services.UserService, jwtService services.JWTService) Endpoint[trans.LoginRequest, trans.LoginResponse] {
+func MakeLoginEndpoint(userService services.UserService, jwtService services.JWTService) Endpoint[trans.LoginRequest, trans.LoginResponse] {
 	return func(ctx context.Context, request trans.LoginRequest) (trans.LoginResponse, error) {
 		exists := userService.Login(request.Username, request.Password)
 		if exists {

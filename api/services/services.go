@@ -6,7 +6,7 @@ import (
 	"github.com/Fingann/Nibble/database"
 	"github.com/Fingann/Nibble/models"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type UserService interface {

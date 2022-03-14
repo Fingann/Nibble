@@ -3,9 +3,9 @@ package main
 import (
 	"net/http"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/Fingann/Nibble/database"
 	"github.com/Fingann/Nibble/services"
