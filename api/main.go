@@ -72,8 +72,8 @@ func main() {
 }
 
 func setupUserRoutes(userService services.UserService, jwtService services.JWTService, users *gin.RouterGroup) {
-	loginEndpoint := endpoint.MakeUserLoginEndpoint(userService, jwtService)
-	registrationEndpoint := endpoint.MakeUserRegistrationEndpoint(userService)
+	loginEndpoint := endpoint.MakeLoginEndpoint(userService, jwtService)
+	registrationEndpoint := endpoint.MakeRegistrationEndpoint(userService)
 	retrievalEndpoint := endpoint.MakeUserRetrieveEndpoint(userService)
 	updateEndpoint := endpoint.MakeUserUpdateEndpoint(userService)
 	deleteEndpoint := endpoint.MakeUserDeleteEndpoint(userService)
