@@ -9,55 +9,57 @@ import (
 
 var once sync.Once
 
-type gormUserRepository struct {
-	Repository[models.User]
+type gormUserRepository[T any] struct {
+	Repository[T]
 	*gorm.DB
 }
 
-func NewGormUserRepository(db *gorm.DB) *gormUserRepository {
+func NewGormRepository[T any](db *gorm.DB) *gormUserRepository[T] {
 	once.Do(func() {
-		db.AutoMigrate(&models.User{})
+		var t T
+		db.AutoMigrate(&t)
 	})
-	return &gormUserRepository{
+	return &gormUserRepository[T]{
 		DB: db,
 	}
 }
 
-func (ur *gormUserRepository) Get(id uint) (models.User, error) {
+func (ur *gormUserRepository[T]) Get(id uint) (models.User, error) {
 	var user models.User
 	result := ur.DB.First(&user, id)
 	return user, result.Error
 }
 
-func (ur *gormUserRepository) Where(usr models.User) ([]models.User, error) {
-	var users []models.User
-	result := ur.DB.Find(&users, &usr)
-	return users, result.Error
+func (ur *gormUserRepository[T]) Where(item T) ([]T, error) {
+	var items []T
+	result := ur.DB.Find(&items, &item)
+	return items, result.Error
 }
 
-func (ur *gormUserRepository) All() ([]models.User, error) {
-	var users []models.User
-	result := ur.DB.Find(&users)
-	return users, result.Error
+func (ur *gormUserRepository[T]) All() ([]T, error) {
+	var items []T
+	result := ur.DB.Find(&items)
+	return items, result.Error
 }
 
-func (ur *gormUserRepository) Create(user models.User) (models.User, error) {
-	result := ur.DB.Create(&user)
-	return user, result.Error
+func (ur *gormUserRepository[T]) Create(item T) (T, error) {
+	result := ur.DB.Create(&item)
+	return item, result.Error
 }
 
-func (ur *gormUserRepository) Update(user models.User) (models.User, error) {
-	result := ur.DB.Save(&user)
-	return user, result.Error
+func (ur *gormUserRepository[T]) Update(item T) (T, error) {
+	result := ur.DB.Save(&item)
+	return item, result.Error
 }
 
-func (ur *gormUserRepository) Delete(id uint) error {
-	result := ur.DB.Delete(&models.User{}, id)
+func (ur *gormUserRepository[T]) Delete(id uint) error {
+	var item T
+	result := ur.DB.Delete(&item, id)
 	return result.Error
 }
 
-func (ur *gormUserRepository) First(usr models.User) (models.User, error) {
-	var user models.User
-	result := ur.DB.First(&user, &usr)
-	return user, result.Error
+func (ur *gormUserRepository[T]) First(usr T) (T, error) {
+	var item T
+	result := ur.DB.First(&item, &usr)
+	return item, result.Error
 }

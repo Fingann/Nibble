@@ -7,6 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/Fingann/Nibble/database"
+	"github.com/Fingann/Nibble/models"
 	"github.com/Fingann/Nibble/services"
 
 	"github.com/Fingann/Nibble/endpoint"
@@ -35,7 +36,7 @@ func GinJsonHandler[T any, K any](endpoint endpoint.Endpoint[T, K]) gin.HandlerF
 
 		}
 
-		if err := c.Copy().ShouldBind(&request); err != nil {
+		if err := c.ShouldBindJSON(&request); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -53,7 +54,7 @@ func GinJsonHandler[T any, K any](endpoint endpoint.Endpoint[T, K]) gin.HandlerF
 func main() {
 
 	db := database.NewGormPostgresDB()
-	userRepository := database.NewGormUserRepository(db)
+	userRepository := database.NewGormRepository[models.User](db)
 
 	userService := services.NewUserService(userRepository)
 	jwtService := services.NewJWTAuthService()
