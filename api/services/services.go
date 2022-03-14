@@ -11,7 +11,7 @@ import (
 
 type UserService interface {
 	database.Repository[models.User]
-	Login(username string, password string) bool
+	Login(username string, password string) (bool, error)
 	Register(email string, username string, password string) (uint, error)
 }
 

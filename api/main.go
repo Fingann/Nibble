@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/Fingann/Nibble/database"
@@ -13,7 +12,7 @@ import (
 	"github.com/Fingann/Nibble/endpoint"
 )
 
-func GinUriHandler[T any, K any](endpoint endpoint.Endpoint[T, K], b binding.Binding) gin.HandlerFunc {
+func GinUriHandler[T any, K any](endpoint endpoint.Endpoint[T, K]) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request T
 		if err := c.ShouldBindUri(&request); err != nil {
@@ -32,6 +31,10 @@ func GinUriHandler[T any, K any](endpoint endpoint.Endpoint[T, K], b binding.Bin
 func GinJsonHandler[T any, K any](endpoint endpoint.Endpoint[T, K]) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request T
+		if err := c.ShouldBindUri(&request); err != nil {
+
+		}
+
 		if err := c.Copy().ShouldBind(&request); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -81,9 +84,9 @@ func setupUserRoutes(userService services.UserService, jwtService services.JWTSe
 	users.POST("/login", GinJsonHandler(loginEndpoint))
 	users.POST("/register", GinJsonHandler(registrationEndpoint))
 	users.Use(AuthorizeJWT(jwtService))
-	users.GET("/:Id", GinUriHandler(retrievalEndpoint, binding.JSON))
+	users.GET("/:Id", GinUriHandler(retrievalEndpoint))
 	users.PUT("/:Id", GinJsonHandler(updateEndpoint))
-	users.DELETE("/:Id", GinUriHandler(deleteEndpoint, binding.JSON))
+	users.DELETE("/:Id", GinUriHandler(deleteEndpoint))
 }
 
 func AuthorizeJWT(jwtService services.JWTService) gin.HandlerFunc {

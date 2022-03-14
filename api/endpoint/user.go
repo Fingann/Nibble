@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"context"
+
 	"github.com/Fingann/Nibble/models"
 	"github.com/Fingann/Nibble/services"
 	trans "github.com/Fingann/Nibble/transport"
@@ -23,7 +24,10 @@ func MakeRegistrationEndpoint(userService services.UserService) Endpoint[trans.R
 
 func MakeLoginEndpoint(userService services.UserService, jwtService services.JWTService) Endpoint[trans.LoginRequest, trans.LoginResponse] {
 	return func(ctx context.Context, request trans.LoginRequest) (trans.LoginResponse, error) {
-		exists := userService.Login(request.Username, request.Password)
+		exists, err := userService.Login(request.Username, request.Password)
+		if err != nil {
+			return trans.LoginResponse{}, err
+		}
 		if exists {
 			token, err := jwtService.GenerateToken(request.Username, true)
 			if err != nil {
@@ -53,7 +57,7 @@ func MakeUserRetrieveEndpoint(userService services.UserService) Endpoint[trans.U
 func MakeUserUpdateEndpoint(userService services.UserService) Endpoint[trans.UserUpdateRequest, trans.UserUpdateResponse] {
 	return func(c context.Context, request trans.UserUpdateRequest) (trans.UserUpdateResponse, error) {
 		user := models.User{
-			Model:    gorm.Model{ID: request.ID},
+			Model:    gorm.Model{ID: request.Id},
 			Username: request.Username,
 			Email:    request.Email,
 		}

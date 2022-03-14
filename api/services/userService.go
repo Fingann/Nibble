@@ -38,17 +38,17 @@ func (ur *userService) Register(email string, username string, password string) 
 	return user.ID, nil
 }
 
-func (ur *userService) Login(username string, password string) bool {
+func (ur *userService) Login(username string, password string) (bool, error) {
 	user := models.User{Username: username}
 	result, err := ur.Repository.First(user)
 	if err != nil {
-		return false
+		return false, err
 	}
 	bytePassword := []byte(password)
 	err = bcrypt.CompareHashAndPassword([]byte(result.PasswordHash), bytePassword)
 	if err != nil {
-		return false
+		return false, err
 	}
 
-	return true
+	return true, nil
 }
