@@ -2,15 +2,14 @@ package services
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 )
 
-type authCustomClaims struct {
-	Name string `json:"name"`
-	User bool   `json:"user"`
+type AuthCustomClaims struct {
+	UserId uint `json:"userId"`
+	IsUser bool `json:"user"`
 	jwt.StandardClaims
 }
 
@@ -20,27 +19,19 @@ type jwtServices struct {
 }
 
 //auth-jwt
-func NewJWTAuthService() JWTService {
+func NewJWTAuthService(secret, issuer string) JWTService {
 	return &jwtServices{
-		secretKey: getSecretKey(),
-		issure:    "nibble",
+		secretKey: secret,
+		issure:    issuer,
 	}
 }
 
-func getSecretKey() string {
-	secret := os.Getenv("SECRET")
-	if secret == "" {
-		secret = "secret"
-	}
-	return secret
-}
-
-func (service *jwtServices) GenerateToken(email string, isUser bool) (string, error) {
-	claims := &authCustomClaims{
-		email,
+func (service *jwtServices) GenerateToken(userId uint, isUser bool) (string, error) {
+	claims := &AuthCustomClaims{
+		userId,
 		isUser,
 		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 48).Unix(),
+			ExpiresAt: time.Now().Add(time.Hour * 2).Unix(),
 			Issuer:    service.issure,
 			IssuedAt:  time.Now().Unix(),
 		},
@@ -63,5 +54,10 @@ func (service *jwtServices) ValidateToken(encodedToken string) (*jwt.Token, erro
 		}
 		return []byte(service.secretKey), nil
 	})
-
+}
+func (service *jwtServices) GetClaims(token *jwt.Token) (*AuthCustomClaims, error) {
+	if claims, ok := token.Claims.(*AuthCustomClaims); ok && token.Valid {
+		return claims, nil
+	}
+	return nil, fmt.Errorf("Invalid token")
 }

@@ -1,61 +1,106 @@
 package endpoint
 
 import (
-	"context"
+	"net/http"
 
-	"github.com/Fingann/Nibble/models"
-	"github.com/Fingann/Nibble/services"
-	trans "github.com/Fingann/Nibble/transport"
+	"github.com/Fingann/notifyGame-api/models"
+	"github.com/Fingann/notifyGame-api/services"
+	"github.com/gin-gonic/gin"
 
 	"gorm.io/gorm"
 )
 
-func MakeRegistrationEndpoint(userService services.UserService) Endpoint[trans.RegistrationRequest, trans.RegistrationResponse] {
-	return func(ctx context.Context, request trans.RegistrationRequest) (trans.RegistrationResponse, error) {
+func SetupUserRoutes(userService services.UserService, jwtService services.JWTService, users *gin.RouterGroup) {
+	users.POST("/login", makeLoginEndpoint(userService, jwtService))
+	users.POST("/register", makeRegistrationEndpoint(userService))
+	users.GET("/:Id", makeUserGetEndpoint(userService))
+	users.PUT("/:Id", makeUserUpdateEndpoint(userService))
+	users.DELETE("/:Id", makeUserDeleteEndpoint(userService))
+}
+
+func makeRegistrationEndpoint(userService services.UserService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var request struct {
+			Username string `json:"username" binding:"required" `
+			Email    string `json:"email" binding:"required,email" `
+			Password string `json:"password" binding:"required" `
+		}
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 
 		id, err := userService.Register(request.Email, request.Username, request.Password)
 		if err != nil {
-			return trans.RegistrationResponse{}, err
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		}
 
-		return trans.RegistrationResponse{ID: id}, nil
+		c.JSON(http.StatusOK, gin.H{"id": id})
 	}
 }
 
-func MakeLoginEndpoint(userService services.UserService, jwtService services.JWTService) Endpoint[trans.LoginRequest, trans.LoginResponse] {
-	return func(ctx context.Context, request trans.LoginRequest) (trans.LoginResponse, error) {
-		exists, err := userService.Login(request.Username, request.Password)
+func makeLoginEndpoint(userService services.UserService, jwtService services.JWTService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var request struct {
+			Username string `json:"username" binding:"required" `
+			Password string `json:"password" binding:"required"`
+		}
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		user, err := userService.Login(request.Username, request.Password)
 		if err != nil {
-			return trans.LoginResponse{}, err
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
 		}
-		if exists {
-			token, err := jwtService.GenerateToken(request.Username, true)
-			if err != nil {
-				return trans.LoginResponse{}, err
-			}
-			return trans.LoginResponse{Token: token}, nil
-		}
-		return trans.LoginResponse{Error: "WRONG CREDENTIALS"}, nil
-	}
-}
 
-func MakeUserRetrieveEndpoint(userService services.UserService) Endpoint[trans.UserRetrieveRequest, trans.UserRetrieveResponse] {
-	return func(ctx context.Context, request trans.UserRetrieveRequest) (trans.UserRetrieveResponse, error) {
-		user := models.User{Model: gorm.Model{ID: request.Id}}
-		result, err := userService.First(user)
+		token, err := jwtService.GenerateToken(user.ID, true)
 		if err != nil {
-			return trans.UserRetrieveResponse{}, err
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
 		}
-		return trans.UserRetrieveResponse{
-			ID:       result.ID,
-			Username: result.Username,
-			Email:    result.Email,
-		}, nil
+		c.JSON(http.StatusOK, gin.H{"token": token})
+		return
+	}
+
+}
+
+func makeUserGetEndpoint(userService services.UserService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var request struct {
+			Id uint `json:"id" form:"Id" binding:"required"`
+		}
+
+		if err := c.ShouldBind(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		user, err := userService.Get(request.Id)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"id":       user.ID,
+			"Username": user.Username,
+			"Email":    user.Email,
+		})
 	}
 }
 
-func MakeUserUpdateEndpoint(userService services.UserService) Endpoint[trans.UserUpdateRequest, trans.UserUpdateResponse] {
-	return func(c context.Context, request trans.UserUpdateRequest) (trans.UserUpdateResponse, error) {
+func makeUserUpdateEndpoint(userService services.UserService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var request struct {
+			Id       uint   `json:"id" form:"Id" binding:"required"`
+			Username string `json:"username"`
+			Email    string `json:"email" binding:"email"`
+		}
+
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 		user := models.User{
 			Model:    gorm.Model{ID: request.Id},
 			Username: request.Username,
@@ -63,21 +108,35 @@ func MakeUserUpdateEndpoint(userService services.UserService) Endpoint[trans.Use
 		}
 		result, err := userService.Update(user)
 		if err != nil {
-			return trans.UserUpdateResponse{}, err
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
 		}
-		return trans.UserUpdateResponse{ID: result.ID,
-			Username: result.Email,
-			Email:    result.Email,
-		}, nil
+		c.JSON(http.StatusOK,
+			gin.H{
+				"id":       result.ID,
+				"Username": result.Email,
+				"Email":    result.Email,
+			})
 	}
 }
 
-func MakeUserDeleteEndpoint(userService services.UserService) Endpoint[trans.UserDeleteRequest, trans.UserDeleteResponse] {
-	return func(c context.Context, request trans.UserDeleteRequest) (trans.UserDeleteResponse, error) {
+func makeUserDeleteEndpoint(userService services.UserService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var request struct {
+			ID uint `json:"id" binding:"required"`
+		}
+
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 		err := userService.Delete(request.ID)
 		if err != nil {
-			return trans.UserDeleteResponse{}, err
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
 		}
-		return trans.UserDeleteResponse{ID: request.ID}, nil
+		c.JSON(http.StatusOK, gin.H{
+			"id": request.ID,
+		})
 	}
 }

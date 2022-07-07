@@ -9,8 +9,8 @@ RUN go mod tidy
 
 COPY . .
 
-RUN go build -o /api fileslut
+RUN go build -o /server server
 
 EXPOSE 8080
 
-CMD [ "/api" ]
+CMD [ "/server" ]

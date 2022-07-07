@@ -1,54 +1,80 @@
 package services
 
 import (
-	"github.com/Fingann/Nibble/database"
+	"errors"
 
-	"github.com/Fingann/Nibble/models"
-	"sync"
+	"github.com/Fingann/notifyGame-api/database"
+	"github.com/Fingann/notifyGame-api/models"
+	"gorm.io/gorm"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-var once sync.Once
+var ErrUserExists = errors.New("user already exists")
 
 type userService struct {
-	database.Repository[models.User]
+	database *gorm.DB
 }
 
-func NewUserService(repository database.Repository[models.User]) UserService {
+func NewUserService(database *gorm.DB) UserService {
 	return &userService{
-		Repository: repository,
+		database: database,
 	}
 }
 
-func (ur *userService) Register(email string, username string, password string) (uint, error) {
-	pass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return 0, err
+func (us *userService) Database() *gorm.DB {
+	return us.database
+}
+
+func (ur *userService) Register(email string, username string, password string) (*models.User, error) {
+	// check if user exists by email or username
+	tx := ur.Database().Where(models.User{Username: username}).Or(models.User{Email: email})
+	if tx.Error != nil {
+		if tx.Error == gorm.ErrRecordNotFound {
+			return nil, ErrUserExists
+		}
+
+		return nil, tx.Error
 	}
-	user := models.User{
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+	userToCreate := models.User{
 		Email:        email,
 		Username:     username,
-		PasswordHash: string(pass),
+		PasswordHash: string(hashedPassword),
 	}
-	user, err = ur.Create(user)
-	if err != nil {
-		return 0, err
+
+	tx = ur.Database().Create(&userToCreate)
+	if tx.Error != nil {
+		return nil, err
 	}
-	return user.ID, nil
+	return &userToCreate, nil
 }
 
-func (ur *userService) Login(username string, password string) (bool, error) {
-	user := models.User{Username: username}
-	result, err := ur.Repository.First(user)
-	if err != nil {
-		return false, err
+func (ur *userService) Login(username string, password string) (*models.User, error) {
+	user := &models.User{}
+
+	tx := ur.database.First(user, &models.User{Username: username})
+	if tx.Error != nil {
+		return nil, tx.Error
 	}
 	bytePassword := []byte(password)
-	err = bcrypt.CompareHashAndPassword([]byte(result.PasswordHash), bytePassword)
+	err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), bytePassword)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	return true, nil
+	return user, nil
 }
+
+func emailOrUserNameExists(username string, email string, ur *userService) (bool, error) {
+	return tx.Error != gorm.ErrRecordNotFound
+
+}
+
+var ErrEmailOrUserNameExists = errors.New("Email or username already exists")
+var ErrUsernameExists = errors.New("Username already exists")
+var ErrEmailExists = errors.New("Email already exists")
